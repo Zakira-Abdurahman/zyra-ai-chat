@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom scrollbar for chat container (optional, but makes it elegant) */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3F0FF;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #7C6CFF;
+  border-radius: 10px;
+}
