@@ -49,7 +49,7 @@ async def websocket_endpoint(websocket: WebSocket):
                 # We'll collect the streamed response
                 full_response = ""
                 stream = ollama.chat(
-                    model='llama3.2:1b',
+                    model='llama3.2:3b',
                     messages=ollama_messages,
                     stream=True,  # <-- THIS ENABLES STREAMING
                 )

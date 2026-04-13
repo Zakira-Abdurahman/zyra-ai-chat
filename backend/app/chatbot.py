@@ -38,7 +38,7 @@ async def get_zyra_response(messages_history):
     # 2. Send the conversation to the free local AI model
     # We use 'llama3.2:1b' which is the small, fast model we downloaded.
     response = ollama.chat(
-        model='llama3.2:1b',
+        model='llama3.2:3b',
         messages=full_conversation
     )
 
