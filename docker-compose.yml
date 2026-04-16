@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    container_name: zyra_postgres
+    environment:
+      POSTGRES_USER: zyra_user
+      POSTGRES_PASSWORD: zyra_pass
+      POSTGRES_DB: zyra_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:
