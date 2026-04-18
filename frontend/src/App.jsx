@@ -4,18 +4,14 @@ import ChatContainer from './components/ChatContainer';
 import InputArea from './components/InputArea';
 
 function App() {
-  const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Hey Zaku... I’m here 😌 How are you feeling today?' }
-  ]);
+  const [messages, setMessages] = useState([]); // ← empty array, no initial message
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const streamingMsgRef = useRef(null);
   const wsRef = useRef(null);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
-
     const ws = new WebSocket('ws://localhost:8000/ws');
     wsRef.current = ws;
 
@@ -31,9 +27,7 @@ function App() {
       setIsConnected(false);
     };
 
-    ws.onerror = (err) => {
-      console.error('WebSocket error:', err);
-    };
+    ws.onerror = (err) => console.error('WebSocket error:', err);
 
     ws.onmessage = (event) => {
       if (!mountedRef.current) return;
@@ -42,19 +36,8 @@ function App() {
 
       if (type === 'typing') {
         setIsTyping(value);
-      } else if (type === 'stream') {
-        if (!streamingMsgRef.current) {
-          streamingMsgRef.current = { role: 'assistant', content: '' };
-          setMessages(prev => [...prev, streamingMsgRef.current]);
-        }
-        streamingMsgRef.current.content += content;
-        setMessages(prev => [...prev]); // force re-render
-      } else if (type === 'stream_end') {
-        streamingMsgRef.current = null;
-        setIsTyping(false);
       } else if (type === 'message' && role === 'assistant') {
         setMessages(prev => [...prev, { role: 'assistant', content }]);
-        streamingMsgRef.current = null;
         setIsTyping(false);
       }
     };
@@ -63,7 +46,7 @@ function App() {
       mountedRef.current = false;
       if (wsRef.current) wsRef.current.close();
     };
-  }, []); // empty dependency array – runs once
+  }, []);
 
   const sendMessage = (text) => {
     if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
