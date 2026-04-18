@@ -9,76 +9,69 @@ function App() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
-  const streamingMessageRef = useRef(null);
-  const socketRef = useRef(null);
-  const reconnectTimerRef = useRef(null);
+  const streamingMsgRef = useRef(null);
+  const wsRef = useRef(null);
+  const mountedRef = useRef(true);
 
   useEffect(() => {
-    // Prevent multiple connections in StrictMode
-    if (socketRef.current?.readyState === WebSocket.OPEN) return;
+    mountedRef.current = true;
 
-    const connect = () => {
-      const ws = new WebSocket('ws://localhost:8000/ws');
-      socketRef.current = ws;
+    const ws = new WebSocket('ws://localhost:8000/ws');
+    wsRef.current = ws;
 
-      ws.onopen = () => {
-        console.log('✅ Connected to Zyra backend');
-        setIsConnected(true);
-        if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
-      };
-
-      ws.onerror = (err) => {
-        console.error('❌ WebSocket error:', err);
-        setIsConnected(false);
-      };
-
-      ws.onclose = () => {
-        console.log('🔌 Disconnected from Zyra backend');
-        setIsConnected(false);
-        // Auto‑reconnect after 3 seconds
-        reconnectTimerRef.current = setTimeout(connect, 3000);
-      };
-
-      ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
-        const { type, role, content, value } = data;
-
-        if (type === 'typing') {
-          setIsTyping(value);
-        } else if (type === 'message' && role === 'assistant') {
-          setMessages(prev => [...prev, { role: 'assistant', content }]);
-          streamingMessageRef.current = null;
-          setIsTyping(false);
-        } else if (type === 'stream') {
-          if (streamingMessageRef.current === null) {
-            streamingMessageRef.current = { role: 'assistant', content: '' };
-            setMessages(prev => [...prev, streamingMessageRef.current]);
-          }
-          streamingMessageRef.current.content += content;
-          setMessages(prev => [...prev]);
-        }
-      };
+    ws.onopen = () => {
+      if (!mountedRef.current) return;
+      console.log('✅ Connected to Zyra backend');
+      setIsConnected(true);
     };
 
-    connect();
+    ws.onclose = () => {
+      if (!mountedRef.current) return;
+      console.log('🔌 Disconnected from Zyra backend');
+      setIsConnected(false);
+    };
+
+    ws.onerror = (err) => {
+      console.error('WebSocket error:', err);
+    };
+
+    ws.onmessage = (event) => {
+      if (!mountedRef.current) return;
+      const data = JSON.parse(event.data);
+      const { type, role, content, value } = data;
+
+      if (type === 'typing') {
+        setIsTyping(value);
+      } else if (type === 'stream') {
+        if (!streamingMsgRef.current) {
+          streamingMsgRef.current = { role: 'assistant', content: '' };
+          setMessages(prev => [...prev, streamingMsgRef.current]);
+        }
+        streamingMsgRef.current.content += content;
+        setMessages(prev => [...prev]); // force re-render
+      } else if (type === 'stream_end') {
+        streamingMsgRef.current = null;
+        setIsTyping(false);
+      } else if (type === 'message' && role === 'assistant') {
+        setMessages(prev => [...prev, { role: 'assistant', content }]);
+        streamingMsgRef.current = null;
+        setIsTyping(false);
+      }
+    };
 
     return () => {
-      // Cleanup only on unmount, not on every render
-      if (socketRef.current) {
-        socketRef.current.close();
-      }
-      if (reconnectTimerRef.current) clearTimeout(reconnectTimerRef.current);
+      mountedRef.current = false;
+      if (wsRef.current) wsRef.current.close();
     };
-  }, []); // Empty dependency array – run once
+  }, []); // empty dependency array – runs once
 
   const sendMessage = (text) => {
-    if (!socketRef.current || socketRef.current.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket not connected');
-      alert('Backend not running. Start it with: uvicorn app.main:app --reload --port 8000');
+    if (!wsRef.current || wsRef.current.readyState !== WebSocket.OPEN) {
+      alert('Not connected to backend. Please refresh the page.');
       return;
     }
     setMessages(prev => [...prev, { role: 'user', content: text }]);
-    socketRef.current.send(JSON.stringify({ type: 'message', content: text }));
+    wsRef.current.send(JSON.stringify({ type: 'message', content: text }));
   };
 
   return (
