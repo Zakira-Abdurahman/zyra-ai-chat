@@ -41,4 +41,4 @@ const InputArea = ({ onSendMessage, disabled }) => {
   );
 };
 
-export default InputArea;
+export default InputArea;5
