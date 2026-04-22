@@ -1,17 +1,27 @@
-const MessageBubble = ({ role, content }) => {
+import { memo } from 'react';
+
+const MessageBubble = memo(({ role, content }) => {
   const isUser = role === 'user';
-  
+
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-3 animate-fade-in`}>
-      <div className={`max-w-[75%] px-4 py-2 rounded-2xl shadow-sm ${
-        isUser 
-          ? 'bg-primary text-white rounded-br-sm' 
-          : 'bg-white border border-secondary text-dark rounded-bl-sm'
-      }`}>
-        <p className="text-sm leading-relaxed">{content}</p>
+    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} mb-4 animate-fade-in`}>
+      <div
+        className={`
+          max-w-[80%] px-4 py-3 rounded-2xl shadow-sm transition-all duration-200
+          ${isUser 
+            ? 'bg-gradient-to-br from-primary to-primary-dark text-white rounded-br-md' 
+            : 'bg-white/80 backdrop-blur-sm border border-primary/20 text-dark rounded-bl-md'
+          }
+        `}
+      >
+        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
+          {content}
+        </p>
       </div>
     </div>
   );
-};
+});
+
+MessageBubble.displayName = 'MessageBubble';
 
 export default MessageBubble;
